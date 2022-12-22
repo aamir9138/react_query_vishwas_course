@@ -353,3 +353,92 @@ export const RQSuperHeroesPage = () => {
   );
 };
 ```
+
+## lecture 4 Handling Query Error
+
+### Traditional way
+
+1. first we will see the traditional way of error handling in `SuperHeroes.page.js` component.
+2. the url is intentionally wrong to see the error
+3. so we need one more `useState` for error handling in traditional way and a catch block of code.
+
+```
+// lecture 4 Handling Query Error
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+export const SuperHeroesPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    axios
+      .get('http://localhost:4000/superheroe111')
+      .then((res) => {
+        setData(res.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        setError(error.message);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (error) {
+    return <h2>{error}</h2>;
+  }
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+
+  return (
+    <>
+      <h2>Super Heroes Page</h2>
+      {data.map((hero) => {
+        return <div>{hero.name}</div>;
+      })}
+    </>
+  );
+};
+```
+
+### Error handling using useQuery()
+
+1. from `useQuery()` output we can destructure `isError` and `error` also. which we can than use to handle the error and return another JSX.
+2. in this case the loading text will show for a little longer because `react-query` attempts multiple tries to fetch the data and if the endpoint is not correct at the end it will throw an error
+
+```
+// lecture 4 handling query error
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes111');
+};
+
+export const RQSuperHeroesPage = () => {
+  // const result = useQuery('super-heroes', () => {
+  // we can destructure  the result
+  const { isLoading, data, isError, error } = useQuery(
+    'super-heroes',
+    fetchHeroes
+  );
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
