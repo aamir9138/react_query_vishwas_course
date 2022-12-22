@@ -206,3 +206,150 @@ export const SuperHeroesPage = () => {
 ```
 
 7. the router used is working in this version ` "react-router-dom": "^5.2.0",`. change it to this if you have recent one in `package.json` file
+
+## lecture 3 Fetching Data with useQuery (react-query version 3.19.2)
+
+1. install react-querty using `npm install react-query@3.19.2`
+2. in `App.js` component import 2 components `QueryClientProvider` and `QueryClient` from `react-query`
+
+```
+import {QueryClientProvider, QueryClient} from 'react-query'
+```
+
+3. in the `App.js` wrap the router inside `QueryClientProvider` component
+4. create an instance of `QueryClient()` as `const queryClient = new QueryClient()`
+5. finally provide a prop on `QueryClientProvider` as `client={queryClient}`. The full App.js code is now
+
+```
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import './App.css';
+import { QueryClientProvider, QueryClient } from 'react-query';
+import { HomePage } from './components/Home.page';
+import { RQSuperHeroesPage } from './components/RQSuperHeroes.page';
+import { SuperHeroesPage } from './components/SuperHeroes.page';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div>
+          <nav>
+            <ul>
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>
+                <Link to="/super-heroes">Traditional Super Heroes</Link>
+              </li>
+              <li>
+                <Link to="/rq-super-heroes">RQ Super Heroes</Link>
+              </li>
+            </ul>
+          </nav>
+          <Switch>
+            <Route path="/super-heroes">
+              <SuperHeroesPage />
+            </Route>
+            <Route path="/rq-super-heroes">
+              <RQSuperHeroesPage />
+            </Route>
+            <Route path="/">
+              <HomePage />
+            </Route>
+          </Switch>
+        </div>
+      </Router>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
+```
+
+### using useQuery in RQSuperHeroes component for fetching data
+
+1. import `useQuery` from `react-query`
+
+```
+import {useQuery} from 'react-query'
+```
+
+2. import axios.
+3. in the component body we will use `useQuery` hook.
+4. useQuery accepts 2 parameters.
+
+- first is a unique key which can be any name here we give `super-heroes`
+- second parameter is a function which will return a Promise. we will use `axios.get()` to return a Promise.
+
+5. so the `useQuery` hook will process it an return many different things which we can receive in a variable for example `const result`
+
+```
+// lecture 3 fetching data with useQuery
+import axios from "axios";
+import { useQuery } from "react-query";
+
+export const RQSuperHeroesPage = () => {
+  const result = useQuery('super-heroes', () => {
+    return axios.get('http://localhost:4000/superheroes')
+  })
+  return <div>RQSuperHeroesPage</div>;
+};
+```
+
+6. we can further destructure the `result` and get what we need from it like below
+
+```
+// lecture 3 fetching data with useQuery
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+export const RQSuperHeroesPage = () => {
+  // const result = useQuery('super-heroes', () => {
+  // we can destructure  the result
+  const { isLoading, data } = useQuery('super-heroes', () => {
+    return axios.get('http://localhost:4000/superheroes');
+  });
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+7. we can define the fetcher function outside of the `useQuery` hook
+
+```
+// fetcher function outside
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  // const result = useQuery('super-heroes', () => {
+  // we can destructure  the result
+  const { isLoading, data } = useQuery('super-heroes', fetchHeroes);
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
