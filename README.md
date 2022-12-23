@@ -442,3 +442,65 @@ export const RQSuperHeroesPage = () => {
   );
 };
 ```
+
+## lecture 5 React Query Devtools
+
+- React Query Devtools will save hours of debugging code time.
+
+1. step one import `ReactQueryDevtools` in `App.js` component from `react-query/devtools`
+2. step two use the `ReactQueryDevtools` component just before the closing `QueryClientProvider` tag
+3. step three set a prop `initialIsOpen={false}` as we don't want it to open by default.
+4. step four add another prop `position='bottom-right'`
+
+```
+/* lecture 5 React Query Devtools */
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import './App.css';
+import { QueryClientProvider, QueryClient } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools'; // import here
+import { HomePage } from './components/Home.page';
+import { RQSuperHeroesPage } from './components/RQSuperHeroes.page';
+import { SuperHeroesPage } from './components/SuperHeroes.page';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div>
+          <nav>
+            <ul>
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>
+                <Link to="/super-heroes">Traditional Super Heroes</Link>
+              </li>
+              <li>
+                <Link to="/rq-super-heroes">RQ Super Heroes</Link>
+              </li>
+            </ul>
+          </nav>
+          <Switch>
+            <Route path="/super-heroes">
+              <SuperHeroesPage />
+            </Route>
+            <Route path="/rq-super-heroes">
+              <RQSuperHeroesPage />
+            </Route>
+            <Route path="/">
+              <HomePage />
+            </Route>
+          </Switch>
+        </div>
+      </Router>
+      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+    </QueryClientProvider>
+  );
+}
+
+export default App;
+```
+
+- when we open the react query devtools. the 2 important thing are `Query Explorer` which gives the state of the react query settings. and Data explorer which are the things we try to see in the network tab upon inspection.
