@@ -637,3 +637,66 @@ export const RQSuperHeroesPage = () => {
 ```
 
 - so if we see now in the Devtools. when we click `RQ super heroes` the query will remain `fresh` for the 30 sec stale time. during this 30 sec if we go to other tabs and come again no background `isFetching` will occur. so at the console you will notice isFetching `false` during this 30sec time. and the user will see the stale data.
+
+## lecture 8 Refetch Defaults
+
+- by default `refetchOnMount` is set to `true`
+- if it is set to true. the query will refetch on mount if the data is `stale` and not `fresh`. means not within the duration of `staleTime`
+- This is the traditional refetching setting. The data is fetched everytime the component mounts
+
+### refetch on mount
+
+- refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
+- refetchOnMount: true, // default refetch but not when data is fresh.
+- refetchOnMount: false // will not refetch on mount even after stale time
+
+### refetch on window focus
+
+- by default `refetchOnWindowFocus` is set to `true`. so anytime out tab loses focus and gains focus again a background refetch is initiated. when the refetch completes the UI gets updated.
+
+- refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
+- refetchOnWindowFocus: true, // default refetch but not when data is fresh.
+- refetchOnWindowFocus: false // will not refetch on window focus even after stale time
+
+```
+/* lecture 8 Refetch Defaults */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const { isLoading, data, isError, error, isFetching } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      // refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnMount: true, // default refetch but not when data is fresh.
+      refetchOnMount: false, // will not refetch on mount even after stale time
+
+      // refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnWindowFocus: true, // default refetch but not when data is fresh.
+      refetchOnWindowFocus: false, // will not refetch on window focus even after stale time
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```

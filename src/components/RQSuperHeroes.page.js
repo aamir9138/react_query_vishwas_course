@@ -118,7 +118,42 @@
 //   );
 // };
 
-/* lecture 7 Stale Time */
+// /* lecture 7 Stale Time */
+// import axios from 'axios';
+// import { useQuery } from 'react-query';
+
+// const fetchHeroes = () => {
+//   return axios.get('http://localhost:4000/superheroes');
+// };
+
+// export const RQSuperHeroesPage = () => {
+//   const { isLoading, data, isError, error, isFetching } = useQuery(
+//     'super-heroes',
+//     fetchHeroes,
+//     {
+//       staleTime: 30000,
+//     }
+//   );
+
+//   console.log({ isLoading, isFetching });
+
+//   if (isLoading) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+/* lecture 8 Refetch Defaults */
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -131,7 +166,13 @@ export const RQSuperHeroesPage = () => {
     'super-heroes',
     fetchHeroes,
     {
-      staleTime: 30000,
+      // refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnMount: true, // default refetch but not when data is fresh.
+      refetchOnMount: false, // will not refetch on mount even after stale time
+
+      // refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnWindowFocus: true, // default refetch but not when data is fresh.
+      refetchOnWindowFocus: false, // will not refetch on window focus even after stale time
     }
   );
 

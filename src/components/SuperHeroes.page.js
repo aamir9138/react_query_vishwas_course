@@ -67,7 +67,6 @@
 // };
 
 /* lecture 6 Query Cache */
-// lecture 4 Handling Query Error
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -101,7 +100,7 @@ export const SuperHeroesPage = () => {
     <>
       <h2>Super Heroes Page</h2>
       {data.map((hero) => {
-        return <div>{hero.name}</div>;
+        return <div key={hero.id}>{hero.name}</div>;
       })}
     </>
   );
