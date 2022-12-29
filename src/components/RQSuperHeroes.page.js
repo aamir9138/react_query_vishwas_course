@@ -194,7 +194,52 @@
 //   );
 // };
 
-/* lecture 9 Pollin */
+// /* lecture 9 Polling */
+// import axios from 'axios';
+// import { useQuery } from 'react-query';
+
+// const fetchHeroes = () => {
+//   return axios.get('http://localhost:4000/superheroes');
+// };
+
+// export const RQSuperHeroesPage = () => {
+//   const { isLoading, data, isError, error, isFetching } = useQuery(
+//     'super-heroes',
+//     fetchHeroes,
+//     {
+//       // refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
+//       // refetchOnMount: true, // default refetch but not when data is fresh.
+//       refetchOnMount: false, // will not refetch on mount even after stale time
+
+//       // refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
+//       // refetchOnWindowFocus: true, // default refetch but not when data is fresh.
+//       refetchOnWindowFocus: false, // will not refetch on window focus even after stale time
+
+//       // refetchInterval: 2000, // default false, every 2 sec refetch used for polling.
+//       // // when the window loses focus it will not refetch
+//       // refetchIntervalInBackground: true, // to poll even when window is not focused.
+//     }
+//   );
+
+//   console.log({ isLoading, isFetching });
+
+//   if (isLoading) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+/* lecture 10 useQuery on Click */
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
@@ -203,27 +248,17 @@ const fetchHeroes = () => {
 };
 
 export const RQSuperHeroesPage = () => {
-  const { isLoading, data, isError, error, isFetching } = useQuery(
+  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
     'super-heroes',
     fetchHeroes,
     {
-      // refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
-      // refetchOnMount: true, // default refetch but not when data is fresh.
-      refetchOnMount: false, // will not refetch on mount even after stale time
-
-      // refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
-      // refetchOnWindowFocus: true, // default refetch but not when data is fresh.
-      refetchOnWindowFocus: false, // will not refetch on window focus even after stale time
-
-      refetchInterval: 2000, // default false, every 2 sec refetch used for polling.
-      // when the window loses focus it will not refetch
-      refetchIntervalInBackground: true, // to poll even when window is not focused.
+      enabled: false,
     }
   );
 
   console.log({ isLoading, isFetching });
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return <h2>... is Loading</h2>;
   }
 
@@ -232,6 +267,8 @@ export const RQSuperHeroesPage = () => {
   }
   return (
     <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
       {data?.data.map((hero) => {
         return <h3 key={hero.name}>{hero.name}</h3>;
       })}

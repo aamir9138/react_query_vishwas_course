@@ -758,3 +758,68 @@ export const RQSuperHeroesPage = () => {
 ```
 
 - if you want to refetch even if the browser is not in focus use in combination of `refetchInterval`, `refetchIntervalInBackground: true`.
+
+## lecture 10 useQuery on Click
+
+So in this lecture we will learn how to fetch data when an `event` occur and not when the component mounts.
+There are 2 steps that we need to implement.
+
+<u>first step</u>
+
+The first step is to inform the `useQuery` not to fire when the component mounts. we do that by passing in a configuration `enabled` and setting it to `false`
+
+```
+{
+  enabled: false
+}
+```
+
+```
+/* lecture 10 useQuery on Click */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      enabled: false,
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+- after doing this if we navigate to RQ Super Heroes we don't see the list of Heroes.
+- and if we look at the Devtools. react query keep tracks of the query but the data is empty.
+
+<u>step two</u>
+
+we fetch the data on click of a button
+
+1. add a button in jsx. and `onClick` event use the `refetch` of provided by `useQuery` as above mentioned.
+
+ofcourse the query cache work also with this. on first fetching it will show `isLoading`. after a subsequent refetch it will not show `isLoading`. if you want to show `isLoading` each time we click `refetch heroes` use the `isFetching` with `isLoading` above.
