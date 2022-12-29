@@ -592,3 +592,48 @@ export const RQSuperHeroesPage = () => {
 
 ![five second observer](./pictures/single_observer_five_second.PNG)
 ![garbage collected](./pictures/garbage_collected.PNG)
+
+## lecture 7 Stale Time
+
+- another use of query cache is to reduce the number of network requests for data that doesn't necessarily change too often.
+- for example let say our list of users doesn't change too often and it is ok for our user to see the `stale data` for a while. in such cases we can use the cached query results without having to refetch it in the background. to achieve this behaviour we configure another property called stale time.
+- the default `staleTime` is 0 sec. set the staleTime to 30 sec.
+
+```
+/* lecture 7 Stale Time */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const { isLoading, data, isError, error, isFetching } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      staleTime: 30000,
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+- so if we see now in the Devtools. when we click `RQ super heroes` the query will remain `fresh` for the 30 sec stale time. during this 30 sec if we go to other tabs and come again no background `isFetching` will occur. so at the console you will notice isFetching `false` during this 30sec time. and the user will see the stale data.
