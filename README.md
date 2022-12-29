@@ -700,3 +700,61 @@ export const RQSuperHeroesPage = () => {
   );
 };
 ```
+
+## lecture 9 Polling
+
+Polling refers to the process of fetching data at regular intervals. for example real time stocks. this ensure local data in sync with the data on remote.
+
+- to poll data on regular intervals we can make use of another configuration called `refetchInterval`
+- by default it is `false`. however we can set it to any number is ms of time.
+- so if we set it to 2 sec you will see in the devtools that every 2sec the data is refetched and the badges will change from `fetching` to `stale` and `stale` to `fetching`.
+- when window loses focus it will not refetch.
+
+```
+/* lecture 9 Pollin */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const { isLoading, data, isError, error, isFetching } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      // refetchOnMount: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnMount: true, // default refetch but not when data is fresh.
+      refetchOnMount: false, // will not refetch on mount even after stale time
+
+      // refetchOnWindowFocus: always // refetch even if it is during staleTime duration means data is fresh yet
+      // refetchOnWindowFocus: true, // default refetch but not when data is fresh.
+      refetchOnWindowFocus: false, // will not refetch on window focus even after stale time
+
+      refetchInterval: 2000, // default false, every 2 sec refetch used for polling.
+      // when the window loses focus it will not refetch
+      refetchIntervalInBackground: true, // to poll even when window is not focused.
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+- if you want to refetch even if the browser is not in focus use in combination of `refetchInterval`, `refetchIntervalInBackground: true`.
