@@ -503,4 +503,92 @@ function App() {
 export default App;
 ```
 
-- when we open the react query devtools. the 2 important thing are `Query Explorer` which gives the state of the react query settings. and Data explorer which are the things we try to see in the network tab upon inspection.
+- when we open the react query devtools. the 2 important thing are `Query Explorer` which gives the state of the react query settings. and `Data explorer` which are the things we try to see in the network tab upon inspection.
+
+## lecture 6 Query Cache
+
+- shortcut for `empty cache and hard reload in browser = Hold down Ctrl and click the Reload button`
+- the devtool will not show any query.
+- first start the json server by writing `npm run serve-json` in the terminal.
+- change the throttle on `network tab` to `fast 3G` to observe things
+
+### Traditional super heroes
+
+- so now observe every time we change the tabs like from `Home` to `Traditional Super Heroes` on the network tab we will see a new request. as in picture. and in browser we will see each time the `loading` text and than list of heroes
+
+![traditional super heroes each time request](./pictures/traditional_super_heroes_eachtime_request.PNG)
+
+### React Query super heroes
+
+- so now observe every time we change the tabs like from `Home` to `RQ Super Heroes` on the network tab we will see a new request. as in picture. and in browser we will not see the `loading` text. This is because of caching.
+  also I observe that for traditional on each press 2 `xhr` request were made but with `React Query` on each click 1 `xhr` request is made.
+
+![react query each time request](./pictures/RQ_super_heroes_eachtime_request.PNG)
+
+- we don't see the loading text this is because of the `Query Cache` that `React Query` provides. by default every query result is cached for 5 minutes. and react query relies on that cache for subsequent request.
+
+- how this happend? so actually the `isLoading` value on first click will set to `true` when data is fetched it is set to `false`. on the subsequent click the `isLoading` value will not change to `true`.
+
+- However react query knows that the server data might have changed and the cached might not contain the latest data. so a background `refetch` is triggered for the same query and when the refetch is successful the new data is updated in the UI. since our data is the same as our cache data we don't see any change in our UI.
+
+- you may be wondering if `isLoading` is not changed, does `useQuery` provide another boolean flag to indicate the `background refetching` of the query. the answer is yes and the flag is call `isFetching`.
+
+- let us log both `isLoading` and `isFetching` to the console to track the network activity.
+- empty cache and reload. on first click of `RQ super Heroes` we can see at the console. `isLoading` is set to true and then change to `false` after fetching data. for `isFetching` it is the same.
+
+![first click RQ super heroes](./pictures/first_click_RQsuperhero.PNG)
+
+- on the second click we see that `isLoading` remains `false` but the `isFetching` first becomes `true` after fetching the data in the background than change to `false`. this means that at loading time the UI will not stale when the data is fetched in the background than it will render on the screen. which leads to better user experience
+
+### Caching time
+
+- default value is 5 minutes
+- but we can change it but providing a third argument to the useQuery
+
+```
+{
+  cacheTime: 5000 // 5sec
+}
+```
+
+```
+/* lecture 6 Query Cache */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const { isLoading, data, isError, error, isFetching } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      cacheTime: 5000, // 5sec
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+- in the react Dev Tools we can see that when we click `RQ super heroes`. the Devtool will have 1 observer. as we change to `Home` tab. after 5 sec the query will be garbage collected.
+
+![five second observer](./pictures/single_observer_five_second.PNG)
+![garbage collected](./pictures/garbage_collected.PNG)
