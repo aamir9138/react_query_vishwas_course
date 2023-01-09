@@ -889,11 +889,12 @@ export const RQSuperHeroesPage = () => {
 5. also we can use ES6 shortcut on `onSuccess` and `onError`. the code will change to it.
 
 ```
+// accessing data and error in sideeffects
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
 const fetchHeroes = () => {
-  return axios.get('http://localhost:4000/superheroes');
+  return axios.get('http://localhost:4000/superheroes1');
 };
 
 export const RQSuperHeroesPage = () => {
@@ -938,3 +939,64 @@ the responses will be something like this.
 
 ![onError sideeffect](./pictures/onerror_sideeffect.PNG)
 ![onSuccess sideeffect](./pictures/onsuccess_sideeffect.PNG)
+
+## lecture 12 Data Transformation
+
+Sometime we don't need all of the data returned from an api call. we may need some specific data. let say we only need `name` of the super heroes. for that react-query provide us with a `select` key which is taking data as an argument. on which we can then `map` through and get the desired items.
+
+```
+/* lecture 12 Data Transformation */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const onSuccess = (data) => {
+    console.log('Perform side effect after data fetching', data);
+  };
+
+  const onError = (error) => {
+    console.log('Perform side effect after encountering error', error);
+  };
+  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      onSuccess,
+      onError,
+      // lecture 12 Data Transformation
+      select: (data) => {
+        const superHeroNames = data.data.map((hero) => hero.name);
+        return superHeroNames;
+      },
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {/* {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })} */}
+      {data.map((heroName) => {
+        return <h3 key={heroName}>{heroName}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+Here we used `map` but we can use `filter` also if we need some of the data depending on our condition.
