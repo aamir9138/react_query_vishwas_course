@@ -239,20 +239,110 @@
 //   );
 // };
 
-/* lecture 10 useQuery on Click */
+// /* lecture 10 useQuery on Click */
+// import axios from 'axios';
+// import { useQuery } from 'react-query';
+
+// const fetchHeroes = () => {
+//   return axios.get('http://localhost:4000/superheroes');
+// };
+
+// export const RQSuperHeroesPage = () => {
+//   const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+//     'super-heroes',
+//     fetchHeroes,
+//     {
+//       enabled: false,
+//     }
+//   );
+
+//   console.log({ isLoading, isFetching });
+
+//   if (isLoading || isFetching) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       <h2>RQ Super Heroes</h2>
+//       <button onClick={refetch}>fetch heroes</button>
+//       {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+// /* lecture 11 Success and Error Callbacks */
+// import axios from 'axios';
+// import { useQuery } from 'react-query';
+
+// const fetchHeroes = () => {
+//   return axios.get('http://localhost:4000/superheroes');
+// };
+
+// export const RQSuperHeroesPage = () => {
+//   const onSuccess = () => {
+//     console.log('Perform side effect after data fetching');
+//   };
+
+//   const onError = () => {
+//     console.log('Perform side effect after encountering error');
+//   };
+//   const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+//     'super-heroes',
+//     fetchHeroes,
+//     {
+//       onSuccess: onSuccess,
+//       onError: onError,
+//     }
+//   );
+
+//   console.log({ isLoading, isFetching });
+
+//   if (isLoading || isFetching) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       <h2>RQ Super Heroes</h2>
+//       <button onClick={refetch}>fetch heroes</button>
+//       {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+// accessing data and error in sideeffects
 import axios from 'axios';
 import { useQuery } from 'react-query';
 
 const fetchHeroes = () => {
-  return axios.get('http://localhost:4000/superheroes');
+  return axios.get('http://localhost:4000/superheroes1');
 };
 
 export const RQSuperHeroesPage = () => {
+  const onSuccess = (data) => {
+    console.log('Perform side effect after data fetching', data);
+  };
+
+  const onError = (error) => {
+    console.log('Perform side effect after encountering error', error);
+  };
   const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
     'super-heroes',
     fetchHeroes,
     {
-      enabled: false,
+      onSuccess,
+      onError,
     }
   );
 

@@ -823,3 +823,118 @@ we fetch the data on click of a button
 1. add a button in jsx. and `onClick` event use the `refetch` of provided by `useQuery` as above mentioned.
 
 ofcourse the query cache work also with this. on first fetching it will show `isLoading`. after a subsequent refetch it will not show `isLoading`. if you want to show `isLoading` each time we click `refetch heroes` use the `isFetching` with `isLoading` above.
+
+## lecture 11 Success and Error Callbacks
+
+In this lecture let us learn about Callbacks with useQuery. when we are dealing with data fetching sometimes we want to perform a `side effect` when the fetching completes.
+
+examples could be `opening a Modal`, `navigating to a different route` or even displaying `toast notification`
+
+To cater to these scenarios react query lets us specify success and error callbacks as configurations or options to the useQuery hook.
+
+let us see how to add them.
+
+1. first we need to define 2 functions `onSuccess` and `onError` which will be called when the query succeed or it fails.
+2. add these functions to the configuration.
+
+```
+/* lecture 11 Success and Error Callbacks */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const onSuccess = () => {
+    console.log('Perform side effect after data fetching');
+  };
+
+  const onError = () => {
+    console.log('Perform side effect after encountering error');
+  };
+  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      onSuccess: onSuccess,
+      onError: onError,
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+3. if we have error `react-query` will retries 3 times and then perform the `onError` side effect.
+4. also worth noting is react-query automatically injects the data that has been fetched or the error that was encountered into these callbacks.
+5. also we can use ES6 shortcut on `onSuccess` and `onError`. the code will change to it.
+
+```
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const RQSuperHeroesPage = () => {
+  const onSuccess = (data) => {
+    console.log('Perform side effect after data fetching', data);
+  };
+
+  const onError = (error) => {
+    console.log('Perform side effect after encountering error', error);
+  };
+  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+    'super-heroes',
+    fetchHeroes,
+    {
+      onSuccess,
+      onError,
+    }
+  );
+
+  console.log({ isLoading, isFetching });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+the responses will be something like this.
+
+![onError sideeffect](./pictures/onerror_sideeffect.PNG)
+![onSuccess sideeffect](./pictures/onsuccess_sideeffect.PNG)
