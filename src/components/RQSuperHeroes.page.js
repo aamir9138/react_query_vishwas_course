@@ -3,6 +3,8 @@
 //   return <div>RQSuperHeroesPage</div>;
 // };
 
+import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
+
 // lecture 3 fetching data with useQuery
 // import axios from 'axios';
 // import { useQuery } from 'react-query';
@@ -366,13 +368,60 @@
 //   );
 // };
 
-/* lecture 12 Data Transformation */
-import axios from 'axios';
-import { useQuery } from 'react-query';
+// /* lecture 12 Data Transformation */
+// import axios from 'axios';
+// import { useQuery } from 'react-query';
 
-const fetchHeroes = () => {
-  return axios.get('http://localhost:4000/superheroes');
-};
+// const fetchHeroes = () => {
+//   return axios.get('http://localhost:4000/superheroes');
+// };
+
+// export const RQSuperHeroesPage = () => {
+//   const onSuccess = (data) => {
+//     console.log('Perform side effect after data fetching', data);
+//   };
+
+//   const onError = (error) => {
+//     console.log('Perform side effect after encountering error', error);
+//   };
+//   const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
+//     'super-heroes',
+//     fetchHeroes,
+//     {
+//       onSuccess,
+//       onError,
+//       // lecture 12 Data Transformation
+//       select: (data) => {
+//         const superHeroNames = data.data.map((hero) => hero.name);
+//         return superHeroNames;
+//       },
+//     }
+//   );
+
+//   console.log({ isLoading, isFetching });
+
+//   if (isLoading || isFetching) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       <h2>RQ Super Heroes</h2>
+//       <button onClick={refetch}>fetch heroes</button>
+//       {/* {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })} */}
+//       {data.map((heroName) => {
+//         return <h3 key={heroName}>{heroName}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+/* lecture 13 Custom Query Hook */
 
 export const RQSuperHeroesPage = () => {
   const onSuccess = (data) => {
@@ -382,21 +431,12 @@ export const RQSuperHeroesPage = () => {
   const onError = (error) => {
     console.log('Perform side effect after encountering error', error);
   };
-  const { isLoading, data, isError, error, isFetching, refetch } = useQuery(
-    'super-heroes',
-    fetchHeroes,
-    {
-      onSuccess,
-      onError,
-      // lecture 12 Data Transformation
-      select: (data) => {
-        const superHeroNames = data.data.map((hero) => hero.name);
-        return superHeroNames;
-      },
-    }
-  );
-
-  console.log({ isLoading, isFetching });
+  const { isLoading, data, isError, error, isFetching, refetch } =
+    useSuperHeroesData(onSuccess, onError);
+  console.log({
+    isLoading,
+    isFetching,
+  });
 
   if (isLoading || isFetching) {
     return <h2>... is Loading</h2>;

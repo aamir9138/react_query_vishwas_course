@@ -940,6 +940,8 @@ the responses will be something like this.
 ![onError sideeffect](./pictures/onerror_sideeffect.PNG)
 ![onSuccess sideeffect](./pictures/onsuccess_sideeffect.PNG)
 
+please complete the homework in this lecture
+
 ## lecture 12 Data Transformation
 
 Sometime we don't need all of the data returned from an api call. we may need some specific data. let say we only need `name` of the super heroes. for that react-query provide us with a `select` key which is taking data as an argument. on which we can then `map` through and get the desired items.
@@ -1000,3 +1002,83 @@ export const RQSuperHeroesPage = () => {
 ```
 
 Here we used `map` but we can use `filter` also if we need some of the data depending on our condition.
+
+## lecture 13 Custom Query Hook
+
+if we want the same type of data in other component. we can duplicate the code but the proper way is to create a `Custom Query Hook`. That will allows us to reuse it.
+
+in this video lets learn how to create custom hook that wraps around the `query-hook`. This will allow us to call the custom hook from multiple components without duplicating the code.
+
+1. create a new file name `useSuperHeroesData.js` in a new folder name `hooks`.
+2. define the hook. a hook is nothing but a function. this hook will be simply a wrapper around the `useQuery` hook.
+3. bring the `useQuery`, `fetcherfunction` and import statements for `axios`and `useQuery` in the hook.
+4. we will not bring the `onSuccess` and `onError` function in the hook. these functions will not be define as reusable functions. typicall this will be pass from the component call to this hook.
+5. so `onSuccess` and `onError` will be specified as parameters in the hook.
+6. finally if we want to use this hook. `return` it and `export` it.
+
+code for the hook is as below
+
+```
+/* lecture 13 Custom Query Hook */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const useSuperHeroesData = (onSuccess, onError) => {
+  return useQuery('super-heroes', fetchHeroes, {
+    onSuccess,
+    onError,
+    select: (data) => {
+      const superHeroNames = data.data.map((hero) => hero.name);
+      return superHeroNames;
+    },
+  });
+};
+```
+
+and the `RQSuperHeroes.page.js` hook code is now changed to this
+
+```
+/* lecture 13 Custom Query Hook */
+
+export const RQSuperHeroesPage = () => {
+  const onSuccess = (data) => {
+    console.log('Perform side effect after data fetching', data);
+  };
+
+  const onError = (error) => {
+    console.log('Perform side effect after encountering error', error);
+  };
+  const { isLoading, data, isError, error, isFetching, refetch } =
+    useSuperHeroesData(onSuccess, onError);
+  console.log({
+    isLoading,
+    isFetching,
+  });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {/* {data?.data.map((hero) => {
+        return <h3 key={hero.name}>{hero.name}</h3>;
+      })} */}
+      {data.map((heroName) => {
+        return <h3 key={heroName}>{heroName}</h3>;
+      })}
+    </>
+  );
+};
+```
+
+please do homework in this lecture.
