@@ -15,7 +15,8 @@
       "name": "Wonder Woman",
       "alterEgo": "Princess Diana"
     }
-  ],"friends":[
+  ],
+  "friends":[
     {
       "id":1,
       "name":"Chandler Bing"
@@ -27,6 +28,18 @@
     {
       "id":3,
       "name":"Rachel Green"
+    }
+  ],
+  "users": [
+    {
+      "id":"vishwas@example.com",
+      "channelId": "codevolution"
+    }
+  ],
+  "channels": [
+    {
+      "id":"codevolution",
+      "courses": ["react","vue","angular"]
     }
   ]
 }

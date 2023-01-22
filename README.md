@@ -1451,3 +1451,96 @@ export const DynamicParallelPage = ({ heroIds }) => {
 all we doing is finding another way to call useQuery() in another way in order not to violate the hooks rules.
 
 so for every id we are now making a separate query. but what does `useQueries()` returns? it returns an array of queryResults. we will just log it to the console to see the results.
+
+## lecture 17 Dependent Queries
+
+we will come across scenerios where we need to execute queries sequentially. that means first we will execute one query get some data from that and on the basis of that we execute the next query. which in large applications is much needed. we called this dependent queries.
+
+1. create `DependentQueries.page.js` component.
+2. configure the component with a route in `App.js`. The component will receive an `email` prop.
+
+```
+<Route path="rq-dependent">
+  <DependentQueriesPage email="vishwas@example.com"/>
+</Route>
+```
+
+in real world example the email will be provided by context api. but assume that a person provide an email to login.
+
+for this example we will extend our data to understand dependent queries. so we add this to `db.json`
+
+```
+  "users": [
+    {
+      "id":"vishwas@example.com",
+      "channelId": "codevolution"
+    }
+  ],
+  "channels": [
+    {
+      "id":"codevolution",
+      "courses": ["react","vue","angular"]
+    }
+  ]
+```
+
+in `DependentQueries.page` we need to fetch the list of courses for the email `vishwas@example.com`. This will require 2 steps.
+
+1. first we will query for the `user` whose email is `vishwas@example.com`.
+2. than we will take the `channelId` and fire the second query where the `id` matches the `channelId`.
+
+This is very common example of dependent queries. let us see how to do this with react query.
+
+first fetch the `users` using the email prop.
+
+```
+import React from 'react';
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchUserByEmail = (email) => {
+  return axios.get(`http://localhost:4000/users/${email}`);
+};
+export const DependentQueriesPage = ({ email }) => {
+  const { data: user } = useQuery(['user', email], () =>
+    fetchUserByEmail(email)
+  );
+
+  return <div>DependentQueries.page</div>;
+};
+```
+
+now based on `user` get hold of `channelId`
+
+```
+const channelId = user?.data.channelId
+```
+
+now use this `channelId` to fetch the courses.
+
+```
+import React from 'react';
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchUserByEmail = (email) => {
+  return axios.get(`http://localhost:4000/users/${email}`);
+};
+const fetchCoursesByChannelId = (channelId) => {
+  return axios.get(`http://localhost:4000/channels/${channelId}`);
+};
+export const DependentQueriesPage = ({ email }) => {
+  const { data: user } = useQuery(['user', email], () =>
+    fetchUserByEmail(email)
+  );
+  const channelId = user?.data.channelId;
+  console.log(channelId);
+  useQuery(['courses', channelId], () => fetchCoursesByChannelId(channelId), {
+    enabled: !!channelId,
+  });
+
+  return <div>DependentQueries.page</div>;
+};
+```
+
+As it stands this query will be fired as soon as the component mounts and the `channelId` would be equal to undefined. However we want the query to be fired only when the `channelId` is retrieved. and for that we use the `enabled` key in our `configuration object`. `enabled:!!channelId` the double exclamation marks convert the channelId to a Boolean which is what `enabled` property expects. All we are saying that when the `channelId` is retrieved fetch the channel details.
