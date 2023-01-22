@@ -1289,3 +1289,97 @@ export const useSuperHeroData = (heroId) => {
   return useQuery(['super-hero', heroId], fetchSuperHero);
 };
 ```
+
+## lecture 15 Parallel Queries
+
+sometimes a single component needs to call multiple Apis to fetch the necessary data. with the react query it is as simple as calling useQuery twice
+
+first add additional data of friends in `db.json`
+
+```
+{
+  "superheroes": [
+    {
+      "id": 1,
+      "name": "Batman dark knight",
+      "alterEgo": "Bruce Wayne"
+    },
+    {
+      "id": 2,
+      "name": "Superman",
+      "alterEgo": "Clark Kent"
+    },
+    {
+      "id": 3,
+      "name": "Wonder Woman",
+      "alterEgo": "Princess Diana"
+    }
+  ],"friends":[
+    {
+      "id":1,
+      "name":"Chandler Bing"
+    },
+    {
+      "id":2,
+      "name":"Joey Tribbiani"
+    },
+    {
+      "id":3,
+      "name":"Rachel Green"
+    }
+  ]
+}
+```
+
+create a component `ParallelQueries.page.js` in `components`
+
+```
+import React from 'react';
+
+export const ParallelQueriesPage = () => {
+  return <div>ParallelQueries page</div>;
+};
+```
+
+add a route to this component.
+
+```
+<Switch>
+  <Route path="/rq-parallel">
+    <ParallelQueriesPage />
+  </Route>
+```
+
+so when we go to the path `http://localhost:3000/rq-parallel` in browser we see the component output.
+To access both `superheroes` and `friends` we can call `useQuery` 2 times and define fetcher functions for each as below.
+
+```
+/* lecture 15 Parallel Queries */
+import axios from 'axios';
+import React from 'react';
+import { useQuery } from 'react-query';
+
+export const ParallelQueriesPage = () => {
+  const fetchHeroes = () => {
+    return axios.get(`http://localhost:4000/superheroes`);
+  };
+  const fetchFriends = () => {
+    return axios.get(`http://localhost:4000/friends`);
+  };
+
+  useQuery('super-heroes', fetchHeroes);
+  useQuery('friends', fetchFriends);
+  return (
+    <div>
+      <h2>Parallel Queries page</h2>
+    </div>
+  );
+}
+```
+
+now if you are wondering we will get conflict while destructuring `data` returned from `useQuery`. what is can do is we can alias the data as below.
+
+```
+  const { data: superHeroes } = useQuery('super-heroes', fetchHeroes);
+  const { data: friends } = useQuery('friends', fetchFriends);
+```
