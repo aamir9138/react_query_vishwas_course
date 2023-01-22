@@ -1383,3 +1383,71 @@ now if you are wondering we will get conflict while destructuring `data` returne
   const { data: superHeroes } = useQuery('super-heroes', fetchHeroes);
   const { data: friends } = useQuery('friends', fetchFriends);
 ```
+
+## lecture 16 Dynamic Parallel Queries
+
+To explain this first we will set our code accordingly.
+
+1. create a component `DynamicParallel.page.js`. in the component the data that we want to fetch is the details about heros.
+2. we have a fetcher function which will fetch details about a single hero
+
+```
+const fetchSuperHero = (heroId) => {
+  return axios.get(`http://localhost:4000/superheroes/${heroId}`)
+}
+```
+
+3. however the component will not fetch data for just one hero. in it we may want to fetch data for multiple heroes.
+
+```
+export const DynamicParallelPage = ({heroIds}) => {
+  return <div>DynamicParallel.page</div>;
+};
+```
+
+so if we see we have received a prop of `heroIds` which we have passed through the `Route` component as below
+
+```
+<Route path="/rq-dynamic-parallel">
+  <DynamicParallelPage heroIds={[1,3]}/>
+</Route>
+```
+
+in the moment it is now hard coded but you can imagine a table of heroes from which we can select which heroes we want and pass it as prop. so the component will not know before hand how many queries to execute.
+
+### important point
+
+the very important point to keep in mind if the number of queries that we need to execute is changing from render to render. we cannot use manual quering as that will violate the rules of hooks. in other words we cannot use the `useQuery` hook multiple time as in case of parallel queries if we have dynamic part like `heroId`.
+
+To cater to this specific scenario `react-query` provides another hook called `useQueries()`. in `useQueries()` we will map through the `heroIds` and return an Object which has 2 properties
+
+1. query Key: `queryKey: ['super-hero', id]`
+2. query Function: `queryFn: () => fetchSuperHero(id)`
+
+```
+/* lecture 16 Dynamic Parallel Queries */
+import axios from 'axios';
+import React from 'react';
+import { useQueries } from 'react-query';
+
+const fetchSuperHero = (heroId) => {
+  return axios.get(`http://localhost:4000/superheroes/${heroId}`);
+};
+
+export const DynamicParallelPage = ({ heroIds }) => {
+  const queryResults = useQueries(
+    heroIds.map((id) => {
+      return {
+        queryKey: ['super-hero', id],
+        queryFn: () => fetchSuperHero(id),
+      };
+    })
+  );
+  console.log({ queryResults });
+  return <div>DynamicParallel.page</div>;
+};
+```
+
+all we doing is finding another way to call useQuery() in another way in order not to violate the hooks rules.
+
+so for every id we are now making a separate query. but what does `useQueries()` returns? it returns an array of queryResults. we will just log it to the console to see the results.
