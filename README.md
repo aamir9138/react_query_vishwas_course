@@ -1082,3 +1082,210 @@ export const RQSuperHeroesPage = () => {
 ```
 
 please do homework in this lecture.
+
+## lecture 14 Query by Id
+
+for example we have a list of items and onclick of the items we want the details of that particular item.
+
+let us learn how to query by id using react-query.
+
+### Quering by Id setup
+
+1. Create a new page that will eventually display the details about one single super hero
+2. configure the route to that page and add a link from the super heroes list page to the super hero details page
+3. fetch a superhero by id and display the details in the UI
+
+create `RQSuperHero.page.js` component for the details of the individual super hero
+
+```
+/* lecture 14 Query by id */
+export const RQSuperHeroPage = () => {
+  return <div>Super hero details</div>;
+};
+```
+
+give a dynamic route in the router for this component. so by dynamic means for each id this component will display. `:heroId` implies that heroId is dynamic. `:heroId` can by 1,2,3,.... for all such path like `/rq-super-heroes/1.../2.../3` the same component will be rendered.
+
+```
+<Route path="/rq-super-heroes/:heroId">
+  <RQSuperHeroPage/>
+</Route>
+```
+
+now that we have a route we need a way to navigate to it. for that we need to make some changes to our super hero hook as well as out component.
+
+in `useSuperHeroesData.js` first we need to modify the data transformation logic as we need the hero id as well and not just the name.
+
+```
+/* lecture 14 Query by Id */
+import axios from 'axios';
+import { useQuery } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+export const useSuperHeroesData = (onSuccess, onError) => {
+  return useQuery('super-heroes', fetchHeroes, {
+    onSuccess,
+    onError,
+    // comment out this as we need other things also not just name
+    // select: (data) => {
+    //   const superHeroNames = data.data.map((hero) => hero.name);
+    //   return superHeroNames;
+    // },
+  });
+};
+```
+
+next we go to the RQSuperHeroes page and uncomment the code which has access to all the data. and give a react router Link to each super hero.
+
+```
+/* lecture 14 Query by Id */
+export const RQSuperHeroesPage = () => {
+  const onSuccess = (data) => {
+    console.log('Perform side effect after data fetching', data);
+  };
+
+  const onError = (error) => {
+    console.log('Perform side effect after encountering error', error);
+  };
+  const { isLoading, data, isError, error, isFetching, refetch } =
+    useSuperHeroesData(onSuccess, onError);
+  console.log({
+    isLoading,
+    isFetching,
+  });
+
+  if (isLoading || isFetching) {
+    return <h2>... is Loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <h2>RQ Super Heroes</h2>
+      <button onClick={refetch}>fetch heroes</button>
+      {/* get access to the whole data not just names */}
+      {data?.data.map((hero) => {
+        return (
+          <div key={hero.id}>
+            <Link to={`/rq-super-heroes/${hero.id}`}>{hero.name}</Link>
+          </div>
+        );
+      })}
+      {/* {data.map((heroName) => {
+        return <h3 key={heroName}>{heroName}</h3>;
+      })} */}
+    </>
+  );
+};
+```
+
+with json server `localhost:4000/superheroes` gives us the list of super heroes defined in `db.json` file
+
+```
+[
+  {
+    "id": 1,
+    "name": "Batman dark knight",
+    "alterEgo": "Bruce Wayne"
+  },
+  {
+    "id": 2,
+    "name": "Superman",
+    "alterEgo": "Clark Kent"
+  },
+  {
+    "id": 3,
+    "name": "Wonder Woman",
+    "alterEgo": "Princess Diana"
+  }
+]
+```
+
+without any additional configuration. `json server also exposes a query by id`. so if we check `localhost:4000/superheroes/1` it give us
+
+```
+{
+  "id": 1,
+  "name": "Batman dark knight",
+  "alterEgo": "Bruce Wayne"
+}
+```
+
+`localhost:4000/superheroes/3` it give us
+
+```
+{
+  "id": 3,
+  "name": "Wonder Woman",
+  "alterEgo": "Princess Diana"
+}
+```
+
+so our end goal now is to get the `heroid` from the URL and pass it to the useQuery hook and make a request to `localhost:4000/superheroes/heroid`. lets see how to do all this.
+
+- create a new hook call `useSuperHeroData.js`. we will pass `heroId` to fetch data for that super hero
+- the query name will be change now to something dynamic to keep track of each hero separately.
+
+```
+useQuery(['super-hero', heroId], () => fetchSuperHero(heroId));
+```
+
+- also in this case to call the fetcher function we need to pass the hero id as seen above. the full code for `useSuperHeroData.js` is
+
+```
+/* lecture 14 Query by id */
+import { useQuery } from 'react-query';
+import axios from 'axios';
+const fetchSuperHero = (heroId) => {
+  return axios.get(`http://localhost:4000/superheroes/${heroId}`);
+};
+export const useSuperHeroData = (heroId) => {
+  return useQuery(['super-hero', heroId], () => fetchSuperHero(heroId));
+};
+```
+
+now in the `RQSuperHero.page.js` file use `useParams()` from the react router to get access to the `heroId` and pass it to the `useSuperHeroData.js` and fetch the data for each super hero.
+
+```
+import { useParams } from 'react-router-dom';
+import { useSuperHeroData } from '../hooks/useSuperHeroData';
+
+/* lecture 14 Query by id */
+export const RQSuperHeroPage = () => {
+  const { heroId } = useParams();
+  const { isLoading, error, isError, data } = useSuperHeroData(heroId);
+
+  if (isLoading) {
+    return <h2>... is loading</h2>;
+  }
+
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <div>
+      super hero details: {data?.data.name} - {data?.data.alterEgo}
+    </div>
+  );
+};
+```
+
+as we pass the `heroId` in the fetcher function. it turns out that `useQuery` implicity pass the `queryKey` to the fetcher function which we can destructure and use it as below.
+
+```
+// using queyKey in fetcher function
+import { useQuery } from 'react-query';
+import axios from 'axios';
+const fetchSuperHero = ({ queryKey }) => {
+  const heroId = queryKey[1]; // queryKey is the array passed to useQuery(['super-hero', heroId])
+  return axios.get(`http://localhost:4000/superheroes/${heroId}`);
+};
+export const useSuperHeroData = (heroId) => {
+  return useQuery(['super-hero', heroId], fetchSuperHero);
+};
+```

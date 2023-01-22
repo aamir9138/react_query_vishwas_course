@@ -3,6 +3,7 @@
 //   return <div>RQSuperHeroesPage</div>;
 // };
 
+import { Link } from 'react-router-dom';
 import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
 
 // lecture 3 fetching data with useQuery
@@ -421,8 +422,45 @@ import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
 //   );
 // };
 
-/* lecture 13 Custom Query Hook */
+// /* lecture 13 Custom Query Hook */
 
+// export const RQSuperHeroesPage = () => {
+//   const onSuccess = (data) => {
+//     console.log('Perform side effect after data fetching', data);
+//   };
+
+//   const onError = (error) => {
+//     console.log('Perform side effect after encountering error', error);
+//   };
+//   const { isLoading, data, isError, error, isFetching, refetch } =
+//     useSuperHeroesData(onSuccess, onError);
+//   console.log({
+//     isLoading,
+//     isFetching,
+//   });
+
+//   if (isLoading || isFetching) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       <h2>RQ Super Heroes</h2>
+//       <button onClick={refetch}>fetch heroes</button>
+//       {/* {data?.data.map((hero) => {
+//         return <h3 key={hero.name}>{hero.name}</h3>;
+//       })} */}
+//       {data.map((heroName) => {
+//         return <h3 key={heroName}>{heroName}</h3>;
+//       })}
+//     </>
+//   );
+// };
+
+/* lecture 14 Query by Id */
 export const RQSuperHeroesPage = () => {
   const onSuccess = (data) => {
     console.log('Perform side effect after data fetching', data);
@@ -449,12 +487,17 @@ export const RQSuperHeroesPage = () => {
     <>
       <h2>RQ Super Heroes</h2>
       <button onClick={refetch}>fetch heroes</button>
-      {/* {data?.data.map((hero) => {
-        return <h3 key={hero.name}>{hero.name}</h3>;
-      })} */}
-      {data.map((heroName) => {
-        return <h3 key={heroName}>{heroName}</h3>;
+      {/* get access to the whole data not just names */}
+      {data?.data.map((hero) => {
+        return (
+          <div key={hero.id}>
+            <Link to={`/rq-super-heroes/${hero.id}`}>{hero.name}</Link>
+          </div>
+        );
       })}
+      {/* {data.map((heroName) => {
+        return <h3 key={heroName}>{heroName}</h3>;
+      })} */}
     </>
   );
 };
