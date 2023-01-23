@@ -1544,3 +1544,41 @@ export const DependentQueriesPage = ({ email }) => {
 ```
 
 As it stands this query will be fired as soon as the component mounts and the `channelId` would be equal to undefined. However we want the query to be fired only when the `channelId` is retrieved. and for that we use the `enabled` key in our `configuration object`. `enabled:!!channelId` the double exclamation marks convert the channelId to a Boolean which is what `enabled` property expects. All we are saying that when the `channelId` is retrieved fetch the channel details.
+
+## lecture 18 Initial Query Data
+
+to understand this topic first set the network speed to `Slow 3G`. than click on RQ Super Heroes first `...isLoading` will show than when we click on one of the hero again `...isLoading` will appear for a while and after moment the details of the the hero will display. so we get 2 times `...isloading`. The question is can we use some of the data from the first query response to show on the super hero details page. the answer is yes we can do it.
+
+so `...isLoading` will not show again and if there is some extra details which will come from the second query request. it will be fetched behind the scene and the page will update accordingly which will give a better user experience.
+
+1. To achieve this first we get hold of `queryClient` in the `useSuperHeroData.js` component by making use of `useQueryClient()` hook.
+2. in the configuration object we make use of `initialData` property which take a function
+3. in the function by making use of `getQueryData('super-heroes')` we will compare the hero id with the clicked one and take that data
+
+```
+/* lecture 18 Initial Query Data */
+import { useQuery, useQueryClient } from 'react-query';
+import axios from 'axios';
+
+const fetchSuperHero = ({ queryKey }) => {
+  const heroId = queryKey[1]; // queryKey is the array passed to useQuery(['super-hero', heroId])
+  return axios.get(`http://localhost:4000/superheroes/${heroId}`);
+};
+
+export const useSuperHeroData = (heroId) => {
+  const queryClient = useQueryClient();
+  return useQuery(['super-hero', heroId], fetchSuperHero, {
+    initialData: () => {
+      const hero = queryClient
+        .getQueryData('super-heroes')
+        ?.data?.find((hero) => hero.id === parseInt(heroId));
+
+      if (hero) {
+        return { data: hero };
+      } else {
+        return undefined;
+      }
+    },
+  });
+};
+```
