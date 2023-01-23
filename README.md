@@ -1582,3 +1582,313 @@ export const useSuperHeroData = (heroId) => {
   });
 };
 ```
+
+## lecture 19 Paginated Queries
+
+To help us understand pagination with react-query we have to set our code for that accordingly.
+
+1. add `colors` array to `db.json`
+
+```
+  "channels": [
+    {
+      "id":"codevolution",
+      "courses": ["react","vue","angular"]
+    }
+  ],
+  "colors": [
+    {
+      "id": 1,
+      "label": "red"
+    },
+
+    {
+      "id": 2,
+      "label": "blue"
+    },
+
+    {
+      "id": 3,
+      "label": "green"
+    },
+
+    {
+      "id": 4,
+      "label": "yellow"
+    },
+
+    {
+      "id": 5,
+      "label": "black"
+    },
+
+    {
+      "id": 6,
+      "label": "white"
+    },
+
+    {
+      "id": 7,
+      "label": "orange"
+    },
+
+    {
+      "id": 8,
+      "label": "purple"
+    }
+  ]
+```
+
+2. add a new component `PaginatedQueries.page.js` with the below code
+
+```
+import React from 'react';
+import { useQuery } from 'react-query';
+import axios from 'axios';
+
+const fetchColors = () => {
+  return axios.get(`http://localhost:4000/colors`);
+};
+
+export const PaginatedQueriesPage = () => {
+  const { isError, isLoading, error, data } = useQuery('colors', fetchColors);
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <div>
+        {data?.data.map((color) => {
+          return (
+            <div key={color.id}>
+              <h2>
+                {color.id} - {color.label}
+              </h2>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+```
+
+3. Add a route to this component at `http://localhost:3000/rq-paginated` in `App.js`
+
+```
+<Route path="/rq-paginated">
+  <PaginatedQueriesPage />
+</Route>
+```
+
+our goal now is to paginate the list of these colors diplaying only 2 per page. lets do that.
+
+### Json server pagination
+
+The first thing you should know is that `json server` supports pagination. all we have to do is provide the query parameters.
+
+1. if we check for `http://localhost:4000/colors` we get all the colors
+
+```
+[
+  {
+    "id": 1,
+    "label": "red"
+  },
+  {
+    "id": 2,
+    "label": "blue"
+  },
+  {
+    "id": 3,
+    "label": "green"
+  },
+  {
+    "id": 4,
+    "label": "yellow"
+  },
+  {
+    "id": 5,
+    "label": "black"
+  },
+  {
+    "id": 6,
+    "label": "white"
+  },
+  {
+    "id": 7,
+    "label": "orange"
+  },
+  {
+    "id": 8,
+    "label": "purple"
+  }
+]
+```
+
+2. if we add `?_limit=2` so if the URL becomes `http://localhost:4000/colors?_limit=2`. it gives us only 2 colors at a time
+
+```
+[
+  {
+    "id": 1,
+    "label": "red"
+  },
+  {
+    "id": 2,
+    "label": "blue"
+  }
+]
+```
+
+3. if we add `&_page=1` it will give first page. `&_page=2` will give second page. so the result for `http://localhost:4000/colors?_limit=2&_page=2` will be
+
+```
+[
+  {
+    "id": 3,
+    "label": "green"
+  },
+  {
+    "id": 4,
+    "label": "yellow"
+  }
+]
+```
+
+### Pagination in coding
+
+now in order to do this in coding we follow these steps
+
+1. add a `useState` to follow the page numbers `const[pageNumber, setPageNumber]= useState(1)`.
+2. we utilise this page number to create unique queries.
+3. so now pass this page number in query key and make an array for the query key `useQuery(['colors',pageNumber], fetchColors);`
+4. pass the page number to the fetcher function `useQuery(['colors',pageNumber], () => fetchColors(pageNumber));`
+
+```
+const fetchColors = (pageNumber) => {
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${pageNumber}`);
+};
+```
+
+5. The final step is to add the next and previous button
+
+```
+import React from 'react';
+import { useQuery } from 'react-query';
+import axios from 'axios';
+import { useState } from 'react';
+
+const fetchColors = (pageNumber) => {
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${pageNumber}`);
+};
+
+export const PaginatedQueriesPage = () => {
+  const [pageNumber, setPageNumber] = useState(1);
+  const { isError, isLoading, error, data } = useQuery(
+    ['colors', pageNumber],
+    () => fetchColors(pageNumber)
+  );
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <div>
+        {data?.data.map((color) => {
+          return (
+            <div key={color.id}>
+              <h2>
+                {color.id} - {color.label}
+              </h2>
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <button
+          onClick={() => setPageNumber((page) => page - 1)}
+          disabled={pageNumber === 1}
+        >
+          Prev Page
+        </button>
+        <button
+          onClick={() => setPageNumber((page) => page + 1)}
+          disabled={pageNumber === 4}
+        >
+          Next Page
+        </button>
+      </div>
+    </>
+  );
+};
+```
+
+Currently everything is working fine but there is room for improvement. Currently the UI jumps in and out of the success and loading state because each new page is treated like a brand new query. to overcome this `react-query` provide an option called `keepPreviousData`. The react-query will keep the previous data while the new data is being requested even though the query key has changed. when the new data arrives the previous data is seemlessly swap to show the new data. we can use the `isFetching` flag to see the loading state. This might not seem as an optimization right now. but when we have tables and large amount of data this will affect. any than you will see the layout shifts. we can overcome layout shifts using `keepPreviousData` option.
+
+```
+import React from 'react';
+import { useQuery } from 'react-query';
+import axios from 'axios';
+import { useState } from 'react';
+
+const fetchColors = (pageNumber) => {
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${pageNumber}`);
+};
+
+export const PaginatedQueriesPage = () => {
+  const [pageNumber, setPageNumber] = useState(1);
+  const { isError, isLoading, error, data, isFetching } = useQuery(
+    ['colors', pageNumber],
+    () => fetchColors(pageNumber),
+    {
+      keepPreviousData: true,
+    }
+  );
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <div>
+        {data?.data.map((color) => {
+          return (
+            <div key={color.id}>
+              <h2>
+                {color.id} - {color.label}
+              </h2>
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <button
+          onClick={() => setPageNumber((page) => page - 1)}
+          disabled={pageNumber === 1}
+        >
+          Prev Page
+        </button>
+        <button
+          onClick={() => setPageNumber((page) => page + 1)}
+          disabled={pageNumber === 4}
+        >
+          Next Page
+        </button>
+      </div>
+      {isFetching && 'Loading'}
+    </>
+  );
+};
+```
