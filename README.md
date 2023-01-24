@@ -1892,3 +1892,185 @@ export const PaginatedQueriesPage = () => {
   );
 };
 ```
+
+## lecture 20 Infinite Queries
+
+we are going to work on the load more button when the user scrolls to the end of the screen. We need to setup some code for this.
+
+1. create a component `InfiniteQueries.page.js`
+
+```
+import { useQuery } from 'react-query';
+import axios from 'axios';
+
+const fetchColors = () => {
+  return axios.get(`http://localhost:4000/colors`);
+};
+
+export const InfiniteQueriesPage = () => {
+  const { isError, isLoading, error, data } = useQuery(
+    ['colors'],fetchColors);
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <div>
+        {data?.data.map((color) => {
+          return (
+            <div key={color.id}>
+              <h2>
+                {color.id} - {color.label}
+              </h2>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+```
+
+2. include a route for the component at `/rq-infinite`. navigate to `http://localhost:3000/rq-infinite` and we will see list of 8 colors
+
+```
+<Route path="/rq-infinite">
+  <InfiniteQueriesPage/>
+</Route>
+```
+
+our goal now is to add a `load more` button and display 2 additional colors on every click.
+
+step 1. to cater to this we use `useInfiniteQuery` instead of simple `useQuery` so change that
+step 2. `useInfiniteQuery` inject a couple of values into the `fetcher function`. for our scenario we need only one value called `pageParam`. we will give default value of 1 to `pageParam` and destructure it. pageParam refers to sort to page number. so our fetcherfunction will become like this.
+
+```
+const fetchColors = ({pageParam = 1}) => {
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${pageParam}`);
+};
+```
+
+The question now is how do we change this `pageParam` to fetch more data. for that we pass in an option to `useInfiniteQueries` in the configuration object. and the property is `getNextPageParam` which is a function which receive 2 parameters `lastPage` and `pages`.
+
+We don't need `lastPage` param so we add `_`. it becomes `_lastPage`. `pages` refers to the an array of api response where each response refers to fetching 2 colors at a time.
+
+```
+{
+    getNextPageParam: (_lastPage, pages) => {
+      if(pages.length < 4){
+        return pages.length + 1
+      } else {
+        return undefined
+      }
+    }
+  }
+```
+
+Ideally this logic will be driven by server apis but our json server isn't that flexible. so we make use of hard coded values. now what this `getNextPageParam` does is returned a value called `hasNextPage` based on which we determined if we have more data or not. so destructure `hasNextPage` and use it to disable `load more` button.
+
+```
+<div>
+  <button disabled={!hasNextPage}>Load more</button>
+</div>
+```
+
+Now the question is what will load when we press that button. for that react-query provide a function `fetchNextPage` so destructure it and assign it to the onClick handler on button.
+
+```
+<button disabled={!hasNextPage} onClick={fetchNextPage}>
+  Load more
+</button>
+```
+
+finally we can destructure 2 more values `isFetching` and `isFetchingNextPage` and use it and use them to show a loading indicator.
+
+now if we run we will errors. That is because `useInfiniteQueries` return data in a different format than `useQuery`. instead of `data` we will have now access to `pages` and then `pages` will give us `group` and index `i`.
+
+and while returning we will return `<Fragment>` inside the fragment we iterate through the `group.data` than we can get `color`.
+
+```
+<div>
+  {data?.pages.map((group, i) => {
+    return (
+      <Fragment key={i}>
+        {group.data.map((color) => (
+          <div key={color.id}>
+            <h2>
+              {color.id} - {color.label}
+            </h2>
+          </div>
+        ))}
+      </Fragment>
+    );
+  })}
+</div>
+```
+
+The code for the full component is as below
+
+```
+import { useInfiniteQuery } from 'react-query';
+import axios from 'axios';
+import { Fragment } from 'react';
+
+const fetchColors = ({ pageParam = 1 }) => {
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${pageParam}`);
+};
+
+export const InfiniteQueriesPage = () => {
+  const {
+    isError,
+    isLoading,
+    error,
+    data,
+    hasNextPage,
+    fetchNextPage,
+    isFetching,
+    isFetchingNextPage,
+  } = useInfiniteQuery(['colors'], fetchColors, {
+    getNextPageParam: (_lastPage, pages) => {
+      if (pages.length < 4) {
+        return pages.length + 1;
+      } else {
+        return undefined;
+      }
+    },
+  });
+
+  if (isLoading) {
+    return <h2>Loading...</h2>;
+  }
+  if (isError) {
+    return <h2>{error.message}</h2>;
+  }
+  return (
+    <>
+      <div>
+        {data?.pages.map((group, i) => {
+          return (
+            <Fragment key={i}>
+              {group.data.map((color) => (
+                <div key={color.id}>
+                  <h2>
+                    {color.id} - {color.label}
+                  </h2>
+                </div>
+              ))}
+            </Fragment>
+          );
+        })}
+      </div>
+      <div>
+        <button disabled={!hasNextPage} onClick={fetchNextPage}>
+          Load more
+        </button>
+      </div>
+      <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
+    </>
+  );
+};
+```
