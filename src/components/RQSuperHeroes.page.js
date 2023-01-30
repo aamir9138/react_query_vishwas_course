@@ -3,8 +3,8 @@
 //   return <div>RQSuperHeroesPage</div>;
 // };
 
-import { Link } from 'react-router-dom';
-import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
+// import { Link } from 'react-router-dom';
+// import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
 
 // lecture 3 fetching data with useQuery
 // import axios from 'axios';
@@ -460,8 +460,57 @@ import { useSuperHeroesData } from '../hooks/useSuperHeroesData';
 //   );
 // };
 
-/* lecture 14 Query by Id */
+// /* lecture 14 Query by Id */
+// export const RQSuperHeroesPage = () => {
+//   const onSuccess = (data) => {
+//     console.log('Perform side effect after data fetching', data);
+//   };
+
+//   const onError = (error) => {
+//     console.log('Perform side effect after encountering error', error);
+//   };
+//   const { isLoading, data, isError, error, isFetching, refetch } =
+//     useSuperHeroesData(onSuccess, onError);
+//   console.log({
+//     isLoading,
+//     isFetching,
+//   });
+
+//   if (isLoading || isFetching) {
+//     return <h2>... is Loading</h2>;
+//   }
+
+//   if (isError) {
+//     return <h2>{error.message}</h2>;
+//   }
+//   return (
+//     <>
+//       <h2>RQ Super Heroes</h2>
+//       <button onClick={refetch}>fetch heroes</button>
+//       {/* get access to the whole data not just names */}
+//       {data?.data.map((hero) => {
+//         return (
+//           <div key={hero.id}>
+//             <Link to={`/rq-super-heroes/${hero.id}`}>{hero.name}</Link>
+//           </div>
+//         );
+//       })}
+//       {/* {data.map((heroName) => {
+//         return <h3 key={heroName}>{heroName}</h3>;
+//       })} */}
+//     </>
+//   );
+// };
+
+/* lecture 21 Mutations */
+import { Link } from 'react-router-dom';
+import { useAddSuperHeroData, useSuperHeroesData } from '../hooks/useSuperHeroesData';
+import { useState } from 'react';
+
 export const RQSuperHeroesPage = () => {
+  const [name, setName] = useState('');
+  const [alterEgo, setAlterEgo] = useState('');
+
   const onSuccess = (data) => {
     console.log('Perform side effect after data fetching', data);
   };
@@ -469,12 +518,27 @@ export const RQSuperHeroesPage = () => {
   const onError = (error) => {
     console.log('Perform side effect after encountering error', error);
   };
-  const { isLoading, data, isError, error, isFetching, refetch } =
-    useSuperHeroesData(onSuccess, onError);
-  console.log({
-    isLoading,
-    isFetching,
-  });
+  const { isLoading, data, isError, error, isFetching, refetch } = useSuperHeroesData(onSuccess, onError);
+
+  const { mutate: addHero } = useAddSuperHeroData();
+
+  const handleAddHeroClick = () => {
+    console.log({ name, alterEgo });
+    const hero = { name, alterEgo };
+    addHero(hero);
+  };
+
+  // const {mutate} = useAddSuperHeroData()
+
+  // const handleAddHeroClick = () => {
+  //   console.log({ name, alterEgo });
+  //   const hero = {name, alterEgo}
+  //   mutate(hero)
+  // };
+
+  // const handleAddHeroClick = () => {
+  //   console.log({ name, alterEgo });
+  // };
 
   if (isLoading || isFetching) {
     return <h2>... is Loading</h2>;
@@ -486,6 +550,11 @@ export const RQSuperHeroesPage = () => {
   return (
     <>
       <h2>RQ Super Heroes</h2>
+      <div>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+        <input type="text" value={alterEgo} onChange={(e) => setAlterEgo(e.target.value)} />
+        <button onClick={handleAddHeroClick}>Add Hero</button>
+      </div>
       <button onClick={refetch}>fetch heroes</button>
       {/* get access to the whole data not just names */}
       {data?.data.map((hero) => {

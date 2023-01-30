@@ -2074,3 +2074,117 @@ export const InfiniteQueriesPage = () => {
   );
 };
 ```
+
+## lecture 21 Mutations
+
+so far we have worked on getting data using react-query. now we work on posting data using react-query. That is sending data from our application to the backend.
+we have to make some changes in our code in order to understand this.
+
+on RQ Super Heroes Page add `2 inputs` and `add hero` button.
+
+1. in `RQSuperHeroes.page.js` import `useState` and keep track of `hero name` and `alterEgo`
+
+```
+import { useState } from 'react'
+const [name, setName] = useState('')
+const [alterEgo, setAlterEgo] = useState('')
+```
+
+2. in the JSX we have 2 inputs to update the respective variables.
+
+```
+const handleAddHeroClick = () => {
+  console.log({ name, alterEgo });
+  };
+
+<div>
+  <input
+    type="text"
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+  />
+  <input
+    type="text"
+    value={alterEgo}
+    onChange={(e) => setAlterEgo(e.target.value)}
+  />
+  <button onClick={handleAddHeroClick}>Add Hero</button>
+</div>
+```
+
+so if we fill in the 2 values and click the `Add Hero` button we should see the 2 values. This all was simple. what we have to do know is to call an api and save this data into `db.json` file like post request.
+
+The first thing that we need to know that json server apart from supporting `Get` request also support `Post` request. so we can make post request with some data and it will be written to the file. we don't have to configure anything.
+
+In `react-query` unlike queries `mutation` are used to `create`,`update` or `delete` data. And for this purpose similar to `useQuery` the library provides `useMutation` hook.
+
+we can add the code in the same component `RQSuperHeroes.page.js` but since we have a hook `useSuperHeroesData.js` created so lets implement the code there. if you see in that file we have defined a custom hook which return `useQuery`.
+
+```
+export const useSuperHeroesData = (onSuccess, onError) => {
+  return useQuery('super-heroes', fetchHeroes, {
+    onSuccess,
+    onError,
+    // comment out this as we need other things also not just name
+    // select: (data) => {
+    //   const superHeroNames = data.data.map((hero) => hero.name);
+    //   return superHeroNames;
+    // },
+  });
+};
+```
+
+we do something similar for `useMutations`.
+
+1. same like `useQuery` define a function which will return `useMutation`. for that import `useMutation` from `react-query`
+
+```
+export const useAddSuperHeroData = () => {
+  return useMutation(addSuperHero)
+}
+```
+
+2. `useMutation` doesn't necessarily take a `query key` like `useQuery`. but it will take a function like `useQuery`. here the function is `addSuperHero`
+
+```
+const addSuperHero = (hero) => {
+  return axios.post(`http://localhost:4000/superheroes`, hero)
+}
+```
+
+what the function do is take a `hero` same as represented in `db.json` and post to it.
+
+The question now is how to use this `hook`. so we will use this in `RQSuperHeroes.page.js`.
+
+1. call `useAddSuperHeroData()` so like `useQuery` it will return a function call `mutate` which we can destructure
+
+```
+const { mutate } = useAddSuperHeroData()
+```
+
+then we can provide `hero` object to the `mutate` in `handleAddHeroClick` function.
+
+```
+  const {mutate} = useAddSuperHeroData()
+
+  const handleAddHeroClick = () => {
+    console.log({ name, alterEgo });
+    const hero = {name, alterEgo}
+    mutate(hero)
+  };
+```
+
+or we can use `aliases` if we have more post requests.
+
+```
+const {mutate: addHero} = useAddSuperHeroData()
+
+const handleAddHeroClick = () => {
+  console.log({ name, alterEgo });
+  const hero = {name, alterEgo}
+  addHero(hero)
+};
+```
+
+in addition to `mutatue` function we can also destructure `isLoading`, `isError`, `error` also if needed we can alias them also.
+so now if we check on `RQ Super Heroes` tab we can add hero and then `fetch heroes` to see the newly added hero.
