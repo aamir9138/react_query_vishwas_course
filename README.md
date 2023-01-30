@@ -2188,3 +2188,92 @@ const handleAddHeroClick = () => {
 
 in addition to `mutatue` function we can also destructure `isLoading`, `isError`, `error` also if needed we can alias them also.
 so now if we check on `RQ Super Heroes` tab we can add hero and then `fetch heroes` to see the newly added hero.
+
+```
+ /* lecture 21 Mutations */
+ import axios from 'axios';
+ import { useMutation, useQuery } from 'react-query';
+
+ const fetchHeroes = () => {
+   return axios.get('http://localhost:4000/superheroes');
+ };
+
+ const addSuperHero = (hero) => {
+   return axios.post(`http://localhost:4000/superheroes`, hero);
+ };
+
+ export const useSuperHeroesData = (onSuccess, onError) => {
+   return useQuery('super-heroes', fetchHeroes, {
+     onSuccess,
+     onError,
+     // comment out this as we need other things also not just name
+     // select: (data) => {
+     //   const superHeroNames = data.data.map((hero) => hero.name);
+     //   return superHeroNames;
+     // },
+   });
+ };
+
+ export const useAddSuperHeroData = () => {
+   return useMutation(addSuperHero);
+ };
+```
+
+## lecture 22 Query Invalidation
+
+As we seen in the previous lecture after posting new data we have to manually refetch the data to get the changes. it would be nice if react automatically updates the new data after posting it.
+
+it is possible using a technique called `Query Invalidation`. How do we do it?
+
+1. we will get hold of the `queryClient` which is provided to the `QueryClientProvider` in the `App.js` component.
+2. To get hold of `queryClient` we use a hook called `useQueryClient()` in `useAddSuperHeroData` hook.
+3. And then as a second argument to `useMutation` we can pass an object with `onSuccess: ()` function where we will invalidate the queries
+4. we must pass the `query key` for which we want to invalidate the queries.
+
+```
+export const useAddSuperHeroData = () => {
+  const queryClient = useQueryClient();
+  return useMutation(addSuperHero, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('super-heroes');
+    },
+  });
+};
+```
+
+The code for the whole component is as under
+
+```
+/* lecture 21 Query Invalidation */
+import axios from 'axios';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+const addSuperHero = (hero) => {
+  return axios.post(`http://localhost:4000/superheroes`, hero);
+};
+
+export const useSuperHeroesData = (onSuccess, onError) => {
+  return useQuery('super-heroes', fetchHeroes, {
+    onSuccess,
+    onError,
+    // comment out this as we need other things also not just name
+    // select: (data) => {
+    //   const superHeroNames = data.data.map((hero) => hero.name);
+    //   return superHeroNames;
+    // },
+  });
+};
+
+export const useAddSuperHeroData = () => {
+  const queryClient = useQueryClient();
+  return useMutation(addSuperHero, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('super-heroes');
+    },
+  });
+};
+```
