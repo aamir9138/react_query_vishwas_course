@@ -24,6 +24,16 @@
       "name": "Billy Batson",
       "alterEgo": "Shazam",
       "id": 5
+    },
+    {
+      "name": "Zabi",
+      "alterEgo": "Toot",
+      "id": 6
+    },
+    {
+      "name": "Idrees",
+      "alterEgo": "Muhammad",
+      "id": 7
     }
   ],
   "friends": [

@@ -2277,3 +2277,65 @@ export const useAddSuperHeroData = () => {
   });
 };
 ```
+
+## lecture 23 Handling Mutation Response
+
+In the previous lecture we learn about `Query Invalidation` which is useful when we have to mutate the remote data that affects the UI.
+for example posting a Hero and refetch it inorder to make sure that the UI is in sync with the remote data.
+
+so when we add a new hero we will see in the `network tab` a post request `201` followed by a get request `200`. and if we see in the `response` tab of post request we found out the new added hero is there in the response as an object.
+
+it is pretty common for the new object to be return in the response of a post request of the mutation. so instead of making a new `Get` request for refetching the newly added data. we can make use of this data returned in the response of the mutation function and immediately update the existing data.
+
+in similar word we can say that to make use of the `addSuperHero` mutation response to update the `super-heroes` query data there by saving an additional network request. let see how to do that.
+
+1. in `useSuperHeroesData.js` comment the line `queryClient.invalidateQueries('super-heroes');` as we don't want an additional call.
+
+2. And make use of the returned `data` from `useMutation` in the `onSuccess` function. in our case the `response data` in our post request.
+
+3. on the `queryClient` instance we call a method called `setQueryData()`. This function is used to update the query cache. The first argument is the query-key so in our case `super-heroes`. The second argument is a function. This function automatically receive the `oldQueryData` as an argument. The `oldQueryData` here refers to what is present in the query-cache. And that we can see in `react-devtools`. it is actually an object of `data, status, statusText, headers, config, and request etc`
+
+4. from this function we need to return the new value of query-cache pertaining to `super-heroes`. In the returned object we spread the old query-cache data and then we add the data from the response of the post request which we got on the `onSuccess` function.
+
+```
+/* lecture 23 Handling Mutation Response */
+import axios from 'axios';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+
+const fetchHeroes = () => {
+  return axios.get('http://localhost:4000/superheroes');
+};
+
+const addSuperHero = (hero) => {
+  return axios.post(`http://localhost:4000/superheroes`, hero);
+};
+
+export const useSuperHeroesData = (onSuccess, onError) => {
+  return useQuery('super-heroes', fetchHeroes, {
+    onSuccess,
+    onError,
+    // comment out this as we need other things also not just name
+    // select: (data) => {
+    //   const superHeroNames = data.data.map((hero) => hero.name);
+    //   return superHeroNames;
+    // },
+  });
+};
+
+export const useAddSuperHeroData = () => {
+  const queryClient = useQueryClient();
+  return useMutation(addSuperHero, {
+    onSuccess: (data) => {
+      //  queryClient.invalidateQueries('super-heroes');
+      queryClient.setQueryData('super-heroes', (oldQueryData) => {
+        return {
+          ...oldQueryData,
+          data: [...oldQueryData.data, data.data],
+        };
+      });
+    },
+  });
+};
+```
+
+so if we run and check it will have only post request without any follow up Get request. so we save one request.
